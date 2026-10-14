@@ -66,8 +66,10 @@ y seguridad. No se guardan secretos, entornos, reportes ni temporales en Git.
 ## SonarQube y PDF de entrega
 
 Servidor: <https://sonarqube.lynvera.ai>. Proyecto: `calculadora`.
-Configura **Settings → Secrets and variables → Actions → SONAR_TOKEN** con
-permiso de análisis y lectura del proyecto. El proyecto debe existir antes de
+Configura **Settings → Secrets and variables → Actions → SONAR_TOKEN** con un
+**User Token** con permisos **Browse** y **Execute Analysis** sobre el proyecto.
+Los tokens de análisis de proyecto no permiten consultar los resultados para
+generar el PDF (HTTP 403). El proyecto debe existir antes de
 analizarlo. Nunca guardes el token en el código.
 
 La edición Community analiza `main`. En PRs/otras ramas se omiten explícitamente

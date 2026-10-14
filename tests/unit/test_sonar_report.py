@@ -44,6 +44,10 @@ def test_http(monkeypatch):
     response.status_code = 302
     with pytest.raises(RuntimeError):
         client.get("system/status")
+    response.status_code = 403
+    with pytest.raises(PermissionError, match="User Token"):
+        client.get("project_analyses/search")
+    response.status_code = 400
     response.raise_for_status.side_effect = requests.HTTPError()
     with pytest.raises(requests.HTTPError):
         client.get("system/status")

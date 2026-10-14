@@ -47,6 +47,10 @@ class SonarClient:
         response = self.session.get(
             f"{self.host}/api/{endpoint}", params=params, timeout=30, allow_redirects=False
         )
+        if response.status_code == 403:
+            raise PermissionError(
+                "SONAR_TOKEN requiere un User Token con permisos Browse y Execute Analysis."
+            )
         response.raise_for_status()
         if response.status_code != 200:
             raise RuntimeError("SonarQube no devolvió una respuesta HTTP 200.")
@@ -146,7 +150,8 @@ def exportar(data: dict[str, Any], output: Path) -> None:
     story: list[Any] = [Paragraph("Resumen del análisis SonarQube", styles["Title"])]
     for line in resumen(data).splitlines():
         if line:
-            story.append(Paragraph(escape(line), styles["BodyText"]))
+            texto = line.lstrip("# ").replace("**", "").replace("`", "")
+            story.append(Paragraph(escape(texto), styles["BodyText"]))
             story.append(Spacer(1, 0.15 * cm))
     story.append(Paragraph("Métricas: proyecto completo y código nuevo", styles["Heading2"]))
     rows = [["Métrica (new_ = código nuevo)", "Valor"]]

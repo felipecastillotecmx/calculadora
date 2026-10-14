@@ -50,9 +50,22 @@ def test_health_schema_seguridad():
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Cross-Origin-Resource-Policy"] == "same-origin"
     assert "frame-ancestors 'none'" in response.headers["Content-Security-Policy"]
     assert "/calcular" in client.get("/openapi.json").json()["paths"]
     assert client.get("/docs").status_code == 404
+
+
+@pytest.mark.parametrize("valor", ["NaN", "Infinity", "-Infinity", "1e9999"])
+def test_api_rechaza_no_finitos_sin_error_interno(valor):
+    response = client.post(
+        "/calcular",
+        content='{"operacion":"suma","numeros":[' + valor + "]}",
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 422
+    assert "detail" in response.json()
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
 
 
 def test_programa_completo_por_teclado():

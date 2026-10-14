@@ -3,11 +3,22 @@
 from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt
 
 from calculadora import Calculadora
 
 app = FastAPI(title="Calculadora", docs_url=None, redoc_url=None)
+
+
+@app.exception_handler(RequestValidationError)
+async def datos_invalidos(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    # No reflejar entradas: NaN/Infinity no se pueden serializar como JSON válido.
+    errores = [
+        {"loc": error["loc"], "msg": error["msg"], "type": error["type"]} for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": errores})
 
 
 class Calculo(BaseModel):
@@ -30,6 +41,7 @@ async def seguridad(
             ),
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
+            "Cross-Origin-Resource-Policy": "same-origin",
             "Cache-Control": "no-store",
             "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
             "Referrer-Policy": "no-referrer",

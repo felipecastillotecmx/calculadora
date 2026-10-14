@@ -26,8 +26,8 @@ addopts = "-ra --strict-markers"
 [tool.coverage.run]
 relative_files = true
 branch = true
-source = ["calculadora", "api", "scripts"]
-omit = ["scripts/__init__.py"]
+source = ["."]
+omit = ["tests/*", "build/*", ".venv/*", "scripts/__init__.py"]
 
 [tool.coverage.report]
 show_missing = true
