@@ -3,9 +3,9 @@
 import json
 import os
 import time
+from html import escape
 from pathlib import Path
 from typing import Any
-from xml.sax.saxutils import escape
 
 import requests
 from reportlab.lib import colors
