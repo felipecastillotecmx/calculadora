@@ -205,6 +205,14 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Reportes generados, no código fuente
+reports/
+.scannerwork/
+report_html.html
+report_json.json
+report_md.md
+.DS_Store
+
 # Ruff stuff:
 .ruff_cache/
 
