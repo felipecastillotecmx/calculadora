@@ -85,7 +85,10 @@ Después de un run de `main`, abre **Actions → run → Artifacts** y descarga
 - Cobertura e issues abiertos de **todo el proyecto**.
 - Cobertura e issues abiertos del **código nuevo**, según la línea base del servidor.
 
-El PDF incluye métricas, issues por alcance y condiciones del Quality Gate.
+El PDF presenta un resumen ejecutivo con indicadores, una tabla comparativa
+por alcance y una segunda sección con condiciones del Quality Gate, hallazgos
+y trazabilidad. Incluye cabeceras, numeración y enlace al análisis; los hallazgos
+extensos continúan en páginas adicionales.
 `N/D` significa que no hay métricas/línea base de código nuevo, nunca un cero
 inventado. Los security hotspots se informan por separado. El reporte se
 publica incluso cuando falla el Quality Gate. Se verifica el análisis/commit

@@ -3,15 +3,12 @@
 import json
 import os
 import time
-from html import escape
 from pathlib import Path
 from typing import Any
 
 import requests
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+from scripts.pdf_report import crear_pdf
 
 METRICAS = (
     "coverage",
@@ -146,46 +143,7 @@ def exportar(data: dict[str, Any], output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
     (output / "sonarqube.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
     (output / "sonarqube.md").write_text(resumen(data), encoding="utf-8")
-    styles = getSampleStyleSheet()
-    story: list[Any] = [Paragraph("Resumen del análisis SonarQube", styles["Title"])]
-    for line in resumen(data).splitlines():
-        if line:
-            texto = line.lstrip("# ").replace("**", "").replace("`", "")
-            story.append(Paragraph(escape(texto), styles["BodyText"]))
-            story.append(Spacer(1, 0.15 * cm))
-    story.append(Paragraph("Métricas: proyecto completo y código nuevo", styles["Heading2"]))
-    rows = [["Métrica (new_ = código nuevo)", "Valor"]]
-    rows += [[metric, str(data["metrics"].get(metric, "N/D"))] for metric in METRICAS]
-    table = Table(rows, colWidths=[12 * cm, 4 * cm], repeatRows=1)
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
-            ]
-        )
-    )
-    story.append(table)
-    for scope, label in [
-        ("overall_issues", "Issues abiertos de todo el proyecto"),
-        ("new_issues", "Issues abiertos de código nuevo"),
-    ]:
-        story.append(Paragraph(label, styles["Heading2"]))
-        if not data[scope]:
-            story.append(Paragraph("Sin issues abiertos en este alcance.", styles["BodyText"]))
-        for issue in data[scope]:
-            line = (
-                f"{issue.get('severity', 'N/D')} | {issue.get('type', 'N/D')} | "
-                f"{issue.get('component', '')}:{issue.get('line', 'N/D')} | "
-                f"{issue.get('message', '')}"
-            )
-            story.append(Paragraph(escape(line), styles["BodyText"]))
-    story.append(Paragraph("Condiciones del Quality Gate", styles["Heading2"]))
-    for condition in data["quality_gate"].get("conditions", []):
-        story.append(Paragraph(escape(json.dumps(condition)), styles["BodyText"]))
-    SimpleDocTemplate(str(output / "sonarqube.pdf"), title="Reporte SonarQube Calculadora").build(
-        story
-    )
+    crear_pdf(data, output / "sonarqube.pdf")
 
 
 def main() -> None:

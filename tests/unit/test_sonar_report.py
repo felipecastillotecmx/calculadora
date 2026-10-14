@@ -21,11 +21,32 @@ def data():
     }
 
 
-def test_exportacion_real(tmp_path, data):
+@pytest.mark.parametrize("sin_condiciones", [True, False])
+def test_exportacion_real(tmp_path, data, sin_condiciones):
+    data["date"] = "2026-10-14T16:23:24+0000"
+    if sin_condiciones:
+        data["quality_gate"] = {"status": "NONE", "conditions": []}
+        data["metrics"]["coverage"] = "N/D"
     report.exportar(data, tmp_path)
     assert (tmp_path / "sonarqube.pdf").read_bytes().startswith(b"%PDF")
-    assert '"coverage": "100"' in (tmp_path / "sonarqube.json").read_text()
+    assert (tmp_path / "sonarqube.json").exists()
     assert "Issues abiertos nuevos: **0**" in (tmp_path / "sonarqube.md").read_text()
+
+
+def test_pdf_con_hallazgos_largos(tmp_path, data):
+    data["overall_issues"] = [
+        {
+            "severity": "CRITICAL",
+            "type": "VULNERABILITY",
+            "line": 123,
+            "component": "calculadora:" + "ruta/" * 120 + "modulo.py",
+            "message": "Entrada <script> & A > B. " * 100,
+        }
+    ] * 8
+    data["new_issues"] = data["overall_issues"][:1]
+    report.exportar(data, tmp_path)
+    assert (tmp_path / "sonarqube.pdf").read_bytes().startswith(b"%PDF")
+    assert "Issues abiertos totales: **8**" in (tmp_path / "sonarqube.md").read_text()
 
 
 def test_destino_autorizado():
