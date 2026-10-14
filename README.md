@@ -43,7 +43,9 @@ el runner temporal; no se publica un servidor ni se escanean sitios externos.
 
 ## Pipeline de GitHub Actions
 
-Se activa con push, pull request y ejecución manual. Las acciones se fijan a
+Se activa con push únicamente a `main`, pull request y ejecución manual.
+Los pushes a ramas de trabajo se validan mediante su PR para evitar ejecuciones
+duplicadas. Las acciones se fijan a
 commits; Dependabot revisa actualizaciones. Se conservan artefactos de pruebas
 y seguridad. No se guardan secretos, entornos, reportes ni temporales en Git.
 
