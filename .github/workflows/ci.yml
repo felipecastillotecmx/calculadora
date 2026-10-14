@@ -233,7 +233,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: pip
         cache-dependency-path: requirements*.txt
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
       with:
         name: python-package
         path: dist
@@ -279,7 +279,7 @@ jobs:
           exit 1
         fi
         curl --fail --silent --show-error --retry 3 "$SONAR_HOST_URL/api/system/status"
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
       with:
         name: coverage
         path: .
@@ -311,7 +311,7 @@ jobs:
         cache: pip
         cache-dependency-path: requirements*.txt
     - run: pip install -r requirements-dev.txt
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
       with:
         name: sonar-task
         path: .scannerwork
