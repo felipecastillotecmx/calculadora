@@ -1,5 +1,9 @@
 # Calculadora en Python
 
+Para recorrer el proyecto en clase, sigue la
+[guía paso a paso para alumnos](GUIA_ALUMNOS.md), con ejemplos de ejecución,
+pruebas y una explicación de cada job del workflow.
+
 La actividad está en **calculadora.py**. No necesita instalar ninguna biblioteca:
 
 ```sh
