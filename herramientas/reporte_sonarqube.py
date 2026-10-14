@@ -33,7 +33,7 @@ def consultar(ruta, **parametros):
 
 
 def esperar_analisis(tarea):
-    for intento in range(60):
+    for _ in range(60):
         datos = consultar("ce/task", id=tarea)["task"]
         if datos["status"] == "SUCCESS":
             return datos["analysisId"]
