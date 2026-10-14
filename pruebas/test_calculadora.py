@@ -23,6 +23,10 @@ def test_promedio():
     assert Calculadora("promedio", [8, 9, 10]).resultado() == 9
 
 
+def test_promedio_con_decimales():
+    assert Calculadora("promedio", [7.5, 8.5, 9.5]).resultado() == 8.5
+
+
 def test_potencia():
     assert Calculadora("potencia", [2, 3]).resultado() == 8
 

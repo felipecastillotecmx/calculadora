@@ -225,11 +225,12 @@ Ejecuta ahora todas las pruebas:
 python -m pytest
 ```
 
-La versión actual contiene 23 funciones de prueba. Algunas usan un bucle para
-revisar varios casos. Un resumen como `23 passed` significa que todas esas
+La versión actual contiene 25 funciones de prueba. Algunas usan un bucle para
+revisar varios casos. Un resumen como `25 passed` significa que todas esas
 funciones aprobaron; el número cambiará si agregas o quitas pruebas.
 
-`pruebas/test_reporte.py` también comprueba el PDF y la descarga de resultados.
+`pruebas/test_reporte.py` también comprueba los PDF y la descarga de resultados.
+Verifica que esta guía conserve los 13 pasos, ejemplos, índice y enlaces.
 Sus respuestas simuladas permiten probar el reporte sin conectarse a SonarQube
 ni necesitar un token en tu computadora.
 
@@ -393,6 +394,9 @@ del servidor. Código nuevo no significa necesariamente solo el último commit.
 Si el Quality Gate falla, el job queda en rojo y conserva el reporte para poder
 revisar la causa. Su descarga también requiere permiso de lectura en SonarQube.
 
+Cuando aprueba el Quality Gate, el mismo job regenera esta guía y la publica
+como **guia-para-alumnos-pdf**, lista para descargar y compartir en clase.
+
 ### Resumen final
 
 El identificador es `resumen`. Espera a todos los demás y utiliza `if: always()`
@@ -474,6 +478,10 @@ Abre una ejecución de `main` que ya haya terminado. Ve a **Actions → ejecuci�
 Comprueba que el PDF corresponde al commit de tu entrega. Revisa el Quality
 Gate, la cobertura general y nueva, y los issues de ambos alcances.
 
+Para compartir esta guía, descarga **guia-para-alumnos-pdf** desde la misma
+ejecución, o abre [el PDF del repositorio](https://github.com/felipecastillotecmx/calculadora/blob/main/material/GUIA_ALUMNOS.pdf).
+La guía y el reporte de SonarQube son dos documentos con propósitos distintos.
+
 Para una copia nueva del repositorio, quien configure el workflow debe guardar
 `SONAR_TOKEN` en **Settings → Secrets and variables → Actions**. Debe ser un
 **User Token** con permisos **Browse** y **Execute Analysis** sobre el proyecto
@@ -481,8 +489,9 @@ Para una copia nueva del repositorio, quien configure el workflow debe guardar
 archivos ni se necesita para ejecutar las pruebas locales.
 
 Entrega `calculadora.py` y el PDF solicitado. No agregues `.venv`, credenciales,
-archivos de cobertura ni reportes generados al commit; `.gitignore` ya excluye
-los archivos temporales del proyecto.
+archivos de cobertura ni reportes del análisis al commit; `.gitignore` ya
+excluye los archivos temporales. La guía de clase en `material/` sí se guarda
+en el repositorio para que todos puedan descargarla.
 
 ## Preguntas para explicar lo aprendido
 
@@ -496,3 +505,19 @@ los archivos temporales del proyecto.
 8. ¿Por qué aparecen varios jobs dentro de una sola ejecución?
 9. ¿Qué sucede con `integracion` si falla `unitarias`?
 10. ¿Dónde descargas el PDF y cómo compruebas qué commit analizó?
+
+## Regenerar la guía para la clase
+
+El texto de esta guía está en `GUIA_ALUMNOS.md`. Después de editarlo, activa
+el entorno virtual con las bibliotecas instaladas y ejecuta:
+
+```sh
+python -m herramientas.guia_pdf
+```
+
+Se actualiza `material/GUIA_ALUMNOS.pdf`, incluido su índice navegable.
+Abre el archivo y revisa las páginas antes de compartirlo. Si cambias el código
+de los ejemplos, ejecuta también las pruebas para mantenerlos al día.
+
+El proyecto se distribuye con la licencia MIT; puedes consultar sus condiciones
+en `LICENSE`.

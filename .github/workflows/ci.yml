@@ -249,6 +249,14 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: python -m herramientas.reporte_sonarqube
+    - name: Generar la guía para compartir en clase
+      run: python -m herramientas.guia_pdf
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      with:
+        name: guia-para-alumnos-pdf
+        path: material/GUIA_ALUMNOS.pdf
+        if-no-files-found: error
+        retention-days: 30
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: sonarqube-report-pdf-json-md

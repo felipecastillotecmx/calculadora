@@ -4,8 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 import requests
+from pypdf import PdfReader
 
 from herramientas import reporte_sonarqube as reporte
+from herramientas.guia_pdf import crear_guia
 
 
 def datos_de_ejemplo():
@@ -37,8 +39,22 @@ def test_crear_reportes(tmp_path):
     datos = datos_de_ejemplo()
     reporte.guardar_reportes(datos, tmp_path)
     assert (tmp_path / "sonarqube.pdf").read_bytes().startswith(b"%PDF")
+    assert len(PdfReader(tmp_path / "sonarqube.pdf").pages) == 2
     assert json.loads((tmp_path / "sonarqube.json").read_text()) == datos
     assert "Issues abiertos nuevos: **0**" in (tmp_path / "sonarqube.md").read_text()
+
+
+def test_guia_para_alumnos(tmp_path):
+    destino = tmp_path / "guia.pdf"
+    crear_guia(Path("GUIA_ALUMNOS.md"), destino)
+    documento = PdfReader(destino)
+    texto = "\n".join(pagina.extract_text() for pagina in documento.pages)
+    for numero in range(1, 14):
+        assert f"Paso {numero} " in texto
+    assert "test_suma_con_negativos" in texto
+    assert "Preguntas para explicar lo aprendido" in texto
+    assert documento.outline
+    assert any(pagina.get("/Annots") for pagina in documento.pages)
 
 
 def test_reporte_sin_datos_y_con_hallazgos(tmp_path):

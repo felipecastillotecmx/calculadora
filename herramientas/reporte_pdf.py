@@ -347,7 +347,9 @@ def crear_pdf(datos, ruta):
         Paragraph(
             '<link href="'
             + escape(datos["dashboard"], quote=True)
-            + '" color="#087F78"><b>Abrir el análisis en SonarQube</b></link>',
+            + '" color="#087F78"><b>Abrir el análisis en SonarQube</b></link> · '
+            '<link href="https://github.com/felipecastillotecmx/calculadora/blob/main/'
+            'material/GUIA_ALUMNOS.pdf" color="#087F78">Guía para alumnos en PDF</link>',
             ESTILOS["texto"],
         ),
         Spacer(1, 10),

@@ -94,7 +94,8 @@ def resumen(datos):
         f"- Cobertura del código nuevo: **{metricas.get('new_coverage', 'N/D')} %**\n"
         f"- Issues abiertos totales: **{len(datos['overall_issues'])}**\n"
         f"- Issues abiertos nuevos: **{len(datos['new_issues'])}**\n"
-        f"- Commit: `{datos['revision']}`\n\n"
+        f"- Commit: `{datos['revision']}`\n"
+        f"- Fecha del análisis: {datos['date']}\n\n"
         f"[Abrir SonarQube]({datos['dashboard']})\n\n"
         "N/D significa que no hay datos disponibles; no equivale a cero.\n"
     )

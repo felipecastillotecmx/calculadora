@@ -1,8 +1,9 @@
 # Calculadora en Python
 
-Para recorrer el proyecto en clase, sigue la
-[guía paso a paso para alumnos](GUIA_ALUMNOS.md), con ejemplos de ejecución,
-pruebas y una explicación de cada job del workflow.
+Para recorrer el proyecto en clase, descarga la
+[guía para alumnos en PDF](material/GUIA_ALUMNOS.pdf), con ejemplos de ejecución,
+pruebas y una explicación de cada job del workflow. Su
+[versión editable](GUIA_ALUMNOS.md) permite adaptar los ejemplos para cada grupo.
 
 La actividad está en **calculadora.py**. No necesita instalar ninguna biblioteca:
 
@@ -26,6 +27,8 @@ Tiene un método para cada operación y `resultado()` elige cuál llamar.
 | `api.py` | Expone la calculadora por HTTP para poder probarla con ZAP. |
 | `herramientas/reporte_sonarqube.py` | Descarga los resultados del análisis. |
 | `herramientas/reporte_pdf.py` | Da formato al PDF. |
+| `herramientas/guia_pdf.py` | Convierte la guía editable en un PDF con índice y marcadores. |
+| `material/GUIA_ALUMNOS.pdf` | Guía lista para compartir en clase. |
 | `requirements.txt` | Bibliotecas de las pruebas, los análisis y el reporte. |
 | `pyproject.toml` | Configuración de las pruebas, la cobertura y el formato. |
 | `sonar-project.properties` | Indica qué archivos analiza SonarQube. |
@@ -53,7 +56,16 @@ assert Calculadora("suma", [2, 3]).resultado() == 5
 Una **prueba de integración** comprueba varias partes juntas: el menú con la
 clase, o una petición HTTP con el cálculo. Los ejemplos están separados en
 `pruebas/test_calculadora.py` y `pruebas/test_integracion.py`.
-`pruebas/test_reporte.py` comprueba la generación del reporte.
+`pruebas/test_reporte.py` comprueba los reportes y el contenido y navegación del PDF de clase.
+
+Después de editar la guía, regenera su PDF con las bibliotecas instaladas:
+
+```sh
+python -m herramientas.guia_pdf
+```
+
+El archivo se guarda en `material/GUIA_ALUMNOS.pdf`. Revisa su presentación antes
+de compartirlo; el índice se actualiza automáticamente.
 
 La **cobertura** indica qué partes del código ejecutaron las pruebas:
 
@@ -83,7 +95,7 @@ Python e instalar las bibliotecas.
 | Dependencias obsoletas | Informa si existen versiones más recientes. |
 | OWASP ZAP | Prueba la API temporal dentro del runner. |
 | SonarQube | Analiza el código e importa la cobertura. |
-| Reporte | Genera el PDF y comprueba el Quality Gate. |
+| Reporte | Comprueba el Quality Gate y publica el reporte y la guía en PDF. |
 | Resumen | Muestra el resultado de todos los jobs. |
 
 Se ejecuta con **push solo en main**, con **pull request** y de forma manual.
@@ -102,5 +114,9 @@ En **Actions → ejecución → Artifacts**, descarga
 cobertura e issues del proyecto completo y del código nuevo, y muestra el commit
 analizado. `N/D` significa que no hay datos; no significa cero.
 
-Entrega **calculadora.py** y **sonarqube.pdf**. Los reportes y los archivos
-locales de desarrollo no se incluyen en los commits.
+La guía también se regenera y se publica como **guia-para-alumnos-pdf** en esa
+ejecución cuando aprueba el Quality Gate.
+
+Entrega **calculadora.py** y **sonarqube.pdf**. Los reportes del análisis y los
+archivos locales de desarrollo no se incluyen en los commits. La guía de clase
+en `material/` sí se guarda en el repositorio para descargarla directamente.

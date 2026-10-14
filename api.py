@@ -42,6 +42,7 @@ def calcular(datos: dict):
         if isinstance(numeros, list) and len(numeros) > 1000:
             raise ValueError("Usa como máximo 1000 números.")
         calculadora = Calculadora(datos.get("operacion"), numeros)
-        return {"resultado": calculadora.resultado()}
+        resultado = calculadora.resultado()
+        return {"resultado": resultado}
     except (ValueError, OverflowError) as error:
         raise HTTPException(status_code=400, detail=str(error)) from error

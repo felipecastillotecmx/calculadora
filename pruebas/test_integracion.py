@@ -58,6 +58,7 @@ def test_api():
     assert cliente.get("/estado").json() == {"estado": "correcto"}
     assert "/calcular" in cliente.get("/openapi.json").json()["paths"]
     assert respuesta.headers["Cross-Origin-Resource-Policy"] == "same-origin"
+    assert respuesta.headers["Cache-Control"] == "no-store"
 
 
 def test_api_con_errores():
@@ -75,4 +76,5 @@ def test_api_con_errores():
             headers={"Content-Type": "application/json"},
         )
         assert respuesta.status_code == 400
+        assert "detail" in respuesta.json()
     assert cliente.post("/calcular", json=[1, 2]).status_code == 422

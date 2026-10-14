@@ -115,7 +115,8 @@ def principal():
             operacion = OPCIONES[opcion]
             numeros = pedir_numeros(operacion)
             calculadora = Calculadora(operacion, numeros)
-            print(f"Resultado: {calculadora.resultado()}")
+            resultado = calculadora.resultado()
+            print(f"Resultado: {resultado}")
             if input("¿Quieres hacer otra operación? (s/n): ").strip().lower() not in (
                 "s",
                 "si",
