@@ -1,9 +1,6 @@
-"""Calculadora orientada a objetos y menú interactivo de la actividad."""
-
 import math
-from collections.abc import Callable, Iterable
 
-OPERACIONES = {
+OPCIONES = {
     "1": "suma",
     "2": "resta",
     "3": "multiplicacion",
@@ -12,116 +9,125 @@ OPERACIONES = {
     "6": "potencia",
     "7": "mayor_menor",
 }
-BINARIAS = {"resta", "division", "potencia"}
 
 
 class Calculadora:
-    """El constructor guarda la operación y una copia de los números."""
+    def __init__(self, operacion, numeros):
+        if operacion not in OPCIONES.values():
+            raise ValueError("La operación no es válida.")
+        if not isinstance(numeros, list) or not numeros:
+            raise ValueError("Ingresa al menos un número.")
+        for numero in numeros:
+            if type(numero) not in (int, float) or not math.isfinite(numero):
+                raise ValueError("Ingresa números reales y finitos.")
+        if operacion in ("resta", "division", "potencia") and len(numeros) != 2:
+            raise ValueError("Esta operación necesita dos números.")
 
-    def __init__(self, operacion: str, numeros: Iterable[float]) -> None:
-        self.operacion = OPERACIONES.get(operacion, operacion)
-        if self.operacion not in OPERACIONES.values():
-            raise ValueError("Operación inválida. Elige una opción del menú.")
-        self.numeros = list(numeros)
-        if not self.numeros:
-            raise ValueError("Debes ingresar al menos un número.")
-        if any(isinstance(n, bool) or not isinstance(n, (int, float)) for n in self.numeros):
-            raise ValueError("Los valores deben ser números reales.")
-        try:
-            self.numeros = [float(n) for n in self.numeros]
-        except OverflowError as exc:
-            raise ValueError("Los números son demasiado grandes.") from exc
-        if not all(math.isfinite(n) for n in self.numeros):
-            raise ValueError("Los números deben ser finitos.")
-        if self.operacion in BINARIAS and len(self.numeros) != 2:
-            raise ValueError("Esta operación requiere exactamente dos números.")
+        self.operacion = operacion
+        self.numeros = numeros.copy()
 
-    def suma(self) -> float:
+    def suma(self):
         return sum(self.numeros)
 
-    def resta(self) -> float:
+    def resta(self):
         return self.numeros[0] - self.numeros[1]
 
-    def multiplicacion(self) -> float:
-        return math.prod(self.numeros)
+    def multiplicacion(self):
+        total = 1
+        for numero in self.numeros:
+            total *= numero
+        return total
 
-    def division(self) -> float:
+    def division(self):
         if self.numeros[1] == 0:
             raise ValueError("No se puede dividir entre cero.")
         return self.numeros[0] / self.numeros[1]
 
-    def promedio(self) -> float:
-        # Dividir antes de sumar evita desbordar promedios de valores grandes.
-        return math.fsum(n / len(self.numeros) for n in self.numeros)
+    def promedio(self):
+        return self.suma() / len(self.numeros)
 
-    def potencia(self) -> float:
+    def potencia(self):
         try:
             return math.pow(self.numeros[0], self.numeros[1])
-        except (ValueError, OverflowError) as exc:
-            raise ValueError("La potencia no produce un número real finito.") from exc
+        except (ValueError, OverflowError) as error:
+            raise ValueError("Esa potencia no produce un número real finito.") from error
 
-    def mayor_menor(self) -> dict[str, float]:
+    def mayor_menor(self):
         return {"mayor": max(self.numeros), "menor": min(self.numeros)}
 
-    def resultado(self) -> float | dict[str, float]:
-        """Despacha la operación a su método y valida el resultado."""
-        metodos: dict[str, Callable[[], float | dict[str, float]]] = {
-            "suma": self.suma,
-            "resta": self.resta,
-            "multiplicacion": self.multiplicacion,
-            "division": self.division,
-            "promedio": self.promedio,
-            "potencia": self.potencia,
-            "mayor_menor": self.mayor_menor,
-        }
-        respuesta = metodos[self.operacion]()
+    def resultado(self):
+        if self.operacion == "suma":
+            respuesta = self.suma()
+        elif self.operacion == "resta":
+            respuesta = self.resta()
+        elif self.operacion == "multiplicacion":
+            respuesta = self.multiplicacion()
+        elif self.operacion == "division":
+            respuesta = self.division()
+        elif self.operacion == "promedio":
+            respuesta = self.promedio()
+        elif self.operacion == "potencia":
+            respuesta = self.potencia()
+        else:
+            respuesta = self.mayor_menor()
         if isinstance(respuesta, float) and not math.isfinite(respuesta):
             raise ValueError("El resultado es demasiado grande.")
         return respuesta
 
 
-def capturar_numeros(operacion: str) -> list[float]:
-    if operacion in BINARIAS:
-        instrucciones = {
-            "resta": "primero menos segundo",
-            "division": "primero entre segundo",
-            "potencia": "primero elevado al segundo",
-        }
-        print(f"Orden: {instrucciones[operacion]}.")
+def pedir_numeros(operacion):
+    orden = {
+        "resta": "primero menos segundo",
+        "division": "primero entre segundo",
+        "potencia": "primero elevado al segundo",
+    }
+    if operacion in orden:
+        print(f"Orden: {orden[operacion]}.")
         cantidad = 2
     else:
-        cantidad = int(input("Cantidad de números: "))
-        if cantidad < 1:
-            raise ValueError("Debes ingresar al menos un número.")
-    return [float(input(f"Número {i + 1}: ")) for i in range(cantidad)]
+        try:
+            cantidad = int(input("¿Cuántos números vas a usar? "))
+        except ValueError as error:
+            raise ValueError("Escribe una cantidad entera de números.") from error
+    if cantidad < 1:
+        raise ValueError("La cantidad debe ser mayor que cero.")
+    numeros = []
+    for posicion in range(cantidad):
+        try:
+            numeros.append(float(input(f"Número {posicion + 1}: ")))
+        except ValueError as error:
+            raise ValueError("Escribe un número válido; puedes usar decimales.") from error
+    return numeros
 
 
-def main() -> None:
-    """La captura y presentación quedan fuera de la clase de cálculos."""
-    try:
-        while True:
-            print(
-                "\n1. Suma\n2. Resta\n3. Multiplicación\n4. División\n"
-                "5. Promedio\n6. Potencia\n7. Mayor y menor\n0. Salir"
-            )
-            opcion = input("Operación: ").strip()
+def principal():
+    # Aquí pedimos los datos; la clase se encarga de hacer las cuentas.
+    while True:
+        try:
+            print("\n1. Suma\n2. Resta\n3. Multiplicación\n4. División")
+            print("5. Promedio\n6. Potencia\n7. Mayor y menor\n0. Salir")
+            opcion = input("Elige una opción: ").strip()
             if opcion == "0":
                 break
-            try:
-                if opcion not in OPERACIONES:
-                    raise ValueError("Opción inválida. Elige un número del 0 al 7.")
-                numeros = capturar_numeros(OPERACIONES[opcion])
-                objeto = Calculadora(opcion, numeros)
-                respuesta = objeto.resultado()
-                print(f"Resultado: {respuesta}")
-            except ValueError as exc:
-                print(f"Datos inválidos: {exc}")
+            if opcion not in OPCIONES:
+                print("Elige una opción del 0 al 7.")
                 continue
-            if input("¿Otra operación? (s/n): ").strip().lower() not in {"s", "si", "sí"}:
+            operacion = OPCIONES[opcion]
+            numeros = pedir_numeros(operacion)
+            calculadora = Calculadora(operacion, numeros)
+            print(f"Resultado: {calculadora.resultado()}")
+            if input("¿Quieres hacer otra operación? (s/n): ").strip().lower() not in (
+                "s",
+                "si",
+                "sí",
+            ):
                 break
-    except (EOFError, KeyboardInterrupt):
-        print("\nHasta luego.")
+        except (ValueError, OverflowError) as error:
+            print(f"No se pudo calcular: {error}")
+        except (EOFError, KeyboardInterrupt):
+            print("\nHasta luego.")
+            break
 
 
 if __name__ == "__main__":
-    main()
+    principal()

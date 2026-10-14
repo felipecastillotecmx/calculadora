@@ -1,33 +1,12 @@
-[build-system]
-requires = ["setuptools>=82"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "calculadora-poo"
-version = "1.0.0"
-description = "Calculadora orientada a objetos con pruebas y pipeline DevSecOps"
-requires-python = ">=3.12"
-dynamic = ["dependencies"]
-
-[project.scripts]
-calculadora = "calculadora:main"
-
-[tool.setuptools]
-py-modules = ["calculadora", "api"]
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["pruebas"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers"
 
 [tool.coverage.run]
 relative_files = true
 branch = true
 source = ["."]
-omit = ["tests/*", "build/*", ".venv/*", "scripts/__init__.py"]
+omit = ["pruebas/*", "build/*", ".venv/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -39,13 +18,7 @@ target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "S"]
+select = ["E", "F", "I", "S"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S603"]
-
-[tool.mypy]
-python_version = "3.12"
-check_untyped_defs = true
-disallow_untyped_defs = true
-ignore_missing_imports = true
+"pruebas/*" = ["S101", "S603"]

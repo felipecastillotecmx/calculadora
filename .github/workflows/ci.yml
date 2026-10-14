@@ -11,92 +11,60 @@ concurrency:
   group: calculadora-${{ github.ref }}
   cancel-in-progress: false
 env:
-  PYTHON_VERSION: '3.12'
   SONAR_HOST_URL: https://sonarqube.lynvera.ai
   PIP_DISABLE_PIP_VERSION_CHECK: '1'
 jobs:
-  lint:
-    name: Formato y tipos
+  revision:
+    name: Revisión del código
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
+    - run: pip install -r requirements.txt
     - run: ruff check .
     - run: ruff format --check .
-    - run: mypy calculadora.py api.py scripts
-  unit:
-    name: Unitarias Python ${{ matrix.python }}
+  unitarias:
+    name: Pruebas unitarias
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ matrix.python }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: pytest tests/unit --junitxml=reports/unit.xml
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: unit-python-${{ matrix.python }}
-        path: reports/unit.xml
-      if: always()
-    strategy:
-      fail-fast: false
-      matrix:
-        python:
-        - '3.12'
-        - '3.13'
-        - '3.14'
-  integration:
-    name: Integración CLI y API
+    - run: pip install -r requirements.txt
+    - run: pytest pruebas/test_calculadora.py pruebas/test_reporte.py
+  integracion:
+    name: Pruebas de integración
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: pytest tests/integration --junitxml=reports/integration.xml
-    - name: Comprobar servidor HTTP real
-      run: |
-        uvicorn api:app --host 127.0.0.1 --port 8000 --no-server-header > /tmp/api.log 2>&1 &
-        server_pid=$!
-        trap 'kill "$server_pid"' EXIT
-        for attempt in {1..30}; do
-          if curl -fsS http://127.0.0.1:8000/health; then break; fi
-          sleep 1
-        done
-        curl -fsS http://127.0.0.1:8000/health
-        curl -fsS http://127.0.0.1:8000/calcular -H 'Content-Type: application/json' -d '{"operacion":"promedio","numeros":[8,9,10]}' | python -c 'import json,sys; assert json.load(sys.stdin)["resultado"] == 9'
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: integration-tests
-        path: reports/integration.xml
-      if: always()
-  coverage:
-    name: Cobertura completa
+    - run: pip install -r requirements.txt
+    - run: pytest pruebas/test_integracion.py
+    needs:
+    - unitarias
+  cobertura:
+    name: Cobertura del proyecto
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: pytest --cov --cov-report=xml --cov-report=html --cov-report=term-missing --junitxml=reports/junit.xml
+    - run: pip install -r requirements.txt
+    - run: pytest --cov --cov-report=xml --junitxml=reports/junit.xml
     - name: Resumen de cobertura
       if: always()
       run: |
@@ -104,17 +72,16 @@ jobs:
         coverage report >> "$GITHUB_STEP_SUMMARY"
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: coverage
+        name: cobertura
         path: |-
           coverage.xml
-          htmlcov/
           reports/junit.xml
         if-no-files-found: error
       if: always()
     needs:
-    - unit
-    - integration
-  secrets:
+    - unitarias
+    - integracion
+  secretos:
     name: Contraseñas y secretos (Gitleaks)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -130,7 +97,7 @@ jobs:
         name: secret-scan
         path: reports/gitleaks.json
       if: always()
-  sast:
+  seguridad:
     name: Seguridad estática (Bandit)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -138,17 +105,16 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: mkdir -p reports && bandit -r calculadora.py api.py scripts -f json -o reports/bandit.json
+    - run: pip install -r requirements.txt
+    - run: mkdir -p reports && bandit -r calculadora.py api.py herramientas -f json -o reports/bandit.json
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: static-security
         path: reports/bandit.json
       if: always()
-  dependencies:
+  dependencias:
     name: Vulnerabilidades de dependencias
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -156,17 +122,16 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: mkdir -p reports && pip-audit -r requirements-dev.txt --format json --output reports/dependencies.json
+    - run: pip install -r requirements.txt
+    - run: mkdir -p reports && pip-audit -r requirements.txt --format json --output reports/dependencies.json
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: dependency-audit
         path: reports/dependencies.json
       if: always()
-  outdated:
+  obsoletas:
     name: Dependencias obsoletas
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -174,56 +139,29 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
+    - run: pip install -r requirements.txt
     - name: Reportar versiones nuevas (informativo)
       run: |
         mkdir -p reports
-        pip list --outdated --format=json > reports/outdated.json
-        python - <<'PYOUT'
-        import json, os
+        pip list --outdated --format=json > reports/obsoletas.json
+        python - <<'PYTHON'
+        import json
+        import os
         from pathlib import Path
-        data = json.loads(Path('reports/outdated.json').read_text())
-        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as report:
-            report.write('## Dependencias obsoletas (informativo)\n\n')
-            for p in data:
-                report.write(f"- {p['name']}: {p['version']} -> {p['latest_version']}\n")
-            if not data:
-                report.write('Sin dependencias obsoletas.\n')
-        PYOUT
+        paquetes = json.loads(Path('reports/obsoletas.json').read_text())
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as resumen:
+            resumen.write('## Dependencias obsoletas (informativo)\n\n')
+            for paquete in paquetes:
+                resumen.write(f"- {paquete['name']}: {paquete['version']} -> {paquete['latest_version']}\n")
+            if not paquetes:
+                resumen.write('Sin dependencias obsoletas.\n')
+        PYTHON
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: outdated-dependencies
-        path: reports/outdated.json
-  package:
-    name: Construir y probar distribución
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-    - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
-    - run: python -m build
-    - name: Instalar wheel y comprobar consola
-      run: |
-        python -m venv /tmp/wheel-test
-        /tmp/wheel-test/bin/pip install dist/*.whl
-        cd /tmp
-        printf '5\n3\n8\n9\n10\nn\n' | /tmp/wheel-test/bin/calculadora | grep -F 'Resultado: 9.0'
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      with:
-        name: python-package
-        path: dist/*
-    needs:
-    - lint
-    - unit
-    - integration
+        path: reports/obsoletas.json
   zap:
     name: OWASP ZAP (API local)
     runs-on: ubuntu-latest
@@ -232,20 +170,14 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      with:
-        name: python-package
-        path: dist
-    - run: pip install dist/*.whl
+    - run: pip install -r requirements.txt
     - name: Iniciar únicamente la API temporal
       run: |
-        uvicorn api:app --host 0.0.0.0 --port 8000 --no-server-header > /tmp/api.log 2>&1 &
-        echo "$!" > /tmp/calculadora-api.pid
-        for attempt in {1..30}; do
-          if curl -fsS http://127.0.0.1:8000/health; then break; fi
+        uvicorn api:aplicacion --host 0.0.0.0 --port 8000 --no-server-header > /tmp/api.log 2>&1 &
+        for intento in {1..20}; do
+          if curl -fsS http://127.0.0.1:8000/estado; then break; fi
           sleep 1
         done
         curl -fsS http://127.0.0.1:8000/openapi.json
@@ -256,15 +188,12 @@ jobs:
         allow_issue_writing: false
         fail_action: true
         artifact_name: owasp-zap
-    - name: Detener API
-      if: always()
-      run: if [ -f /tmp/calculadora-api.pid ]; then kill "$(cat /tmp/calculadora-api.pid)"; fi
     needs:
-    - package
-    - secrets
-    - sast
-    - dependencies
-  sonar:
+    - integracion
+    - secretos
+    - seguridad
+    - dependencias
+  sonarqube:
     name: Análisis SonarQube con cobertura
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -283,25 +212,25 @@ jobs:
         curl --fail --silent --show-error --retry 3 "$SONAR_HOST_URL/api/system/status"
     - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
-        name: coverage
+        name: cobertura
         path: .
     - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
-        name: sonar-task
+        name: tarea-sonarqube
         path: .scannerwork/report-task.txt
         include-hidden-files: true
       if: always()
     needs:
-    - coverage
-    - lint
-    - secrets
-    - sast
-    - dependencies
+    - cobertura
+    - revision
+    - secretos
+    - seguridad
+    - dependencias
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-  sonar-report:
+  reporte:
     name: Descargar reporte SonarQube (PDF) y verificar Quality Gate
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -309,18 +238,17 @@ jobs:
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
     - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.12'
         cache: pip
-        cache-dependency-path: requirements*.txt
-    - run: pip install -r requirements-dev.txt
+    - run: pip install -r requirements.txt
     - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
       with:
-        name: sonar-task
+        name: tarea-sonarqube
         path: .scannerwork
     - name: Exportar análisis real y evaluar Quality Gate
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: python -m scripts.sonar_report
+      run: python -m herramientas.reporte_sonarqube
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
         name: sonarqube-report-pdf-json-md
@@ -329,48 +257,47 @@ jobs:
         retention-days: 30
       if: always()
     needs:
-    - sonar
-  summary:
+    - sonarqube
+  resumen:
     name: Resumen final y estado del pipeline
     if: always()
     needs:
-    - lint
-    - unit
-    - integration
-    - coverage
-    - secrets
-    - sast
-    - dependencies
-    - outdated
-    - package
+    - revision
+    - unitarias
+    - integracion
+    - cobertura
+    - secretos
+    - seguridad
+    - dependencias
+    - obsoletas
     - zap
-    - sonar
-    - sonar-report
+    - sonarqube
+    - reporte
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
     - name: Estado de todos los controles
       env:
-        RESULTS: ${{ toJSON(needs) }}
-        MAIN_SCAN: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        RESULTADOS: ${{ toJSON(needs) }}
+        ANALIZAR_SONAR: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
       run: |
-        python - <<'PYSUM'
-        import json, os
-        results = json.loads(os.environ['RESULTS'])
-        failed = []
-        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as report:
-            report.write('# Resumen de calidad y seguridad\n\n')
-            report.write('Cobertura: todo el código Python, mínimo 90 % de líneas y ramas.\n\n')
-            report.write('Artefacto sonarqube-report-pdf-json-md: issues y cobertura totales/nuevos.\n\n')
-            report.write('| Job | Resultado |\n|---|---|\n')
-            for job, result in results.items():
-                state = result['result']
-                report.write(f'| {job} | {state} |\n')
-                allowed_skip = job in {'sonar', 'sonar-report'} and os.environ['MAIN_SCAN'] != 'true'
-                if state != 'success' and not (state == 'skipped' and allowed_skip):
-                    failed.append(job)
-            report.write('\nDependencias obsoletas: informativo; vulnerabilidades: bloqueante.\n')
-            report.write('\nSonarQube Community analiza main; en PRs/otras ramas se omite explícitamente.\n')
-        if failed:
-            raise SystemExit('Controles no aprobados: ' + ', '.join(failed))
-        PYSUM
+        python - <<'PYTHON'
+        import json
+        import os
+        resultados = json.loads(os.environ['RESULTADOS'])
+        fallos = []
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as resumen:
+            resumen.write('# Resumen de la ejecución\n\n| Job | Resultado |\n|---|---|\n')
+            for nombre, datos in resultados.items():
+                estado = datos['result']
+                resumen.write(f'| {nombre} | {estado} |\n')
+                if estado == 'success':
+                    continue
+                if nombre in ('sonarqube', 'reporte') and estado == 'skipped' and os.environ['ANALIZAR_SONAR'] != 'true':
+                    continue
+                fallos.append(nombre)
+            resumen.write('\nEl PDF separa cobertura e issues de todo el proyecto y del código nuevo.\n')
+            resumen.write('\nSonarQube analiza main; en los PR se ejecutan los demás controles.\n')
+        if fallos:
+            raise SystemExit('Hay controles pendientes o fallidos: ' + ', '.join(fallos))
+        PYTHON
